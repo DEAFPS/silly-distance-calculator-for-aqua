@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silly Distance Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1f1f1f;
+            color: #ffffff;
+        }
+
+        #container {
+            width: 400px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #2f2f2f;
+            position: relative;
+        }
+
+        #history {
+            position: absolute;
+            top: 0px;
+            left: 500px;
+            width: 300px;
+            padding: 10px;
+            background-color: #3f3f3f;
+            border-radius: 5px;
+        }
+
+        h2,
+        h3,
+        p,
+        pre,
+        textarea,
+        button,
+        #vector1,
+        #vector2,
+        #distance,
+        #history {
+            color: #ffffff;
+        }
+
+        pre {
+            background-color: #3f3f3f;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #3f3f3f;
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 5px;
+            color: #ffffff;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #vector1,
+        #vector2,
+        #distance {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #history p {
+            margin: 0;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h2>Silly Distance Calculator</h2>
+        <h3>Instructions:</h3>
+        <p>1. Use <code>-tools</code> in your game console.</p>
+        <p>2. Run these commands:</p>
+        <pre>
+cl_net_showevents 1
+bind mouse3 "player_ping;getpos"
+        </pre>
+        <p>3. Ping a wall and copy the console output from the piss yellow text down to the urgent var.</p>
+        <textarea id="textInput" rows="10" cols="40" placeholder="Paste console output here"></textarea>
+        <button onclick="parseText()">Parse</button>
+        <div id="distance"></div>
+        <div id="history">
+            <h3>History Log</h3>
+        </div>
+    </div>
+
+    <script>
+        function buildVectorFromText(text) {
+            const lines = text.split('\n');
+            const vector = {};
+
+            for (const line of lines) {
+                if (line.includes('"x"') || line.includes('"y"') || line.includes('"z"')) {
+                    const parts = line.split('=');
+                    if (parts.length === 2) {
+                        const keyMatch = parts[0].trim().match(/^-?\s*"(\w+)"$/);
+                        if (keyMatch && keyMatch.length === 2) {
+                            const key = keyMatch[1];
+                            const value = parseFloat(parts[1].trim().replace(/"/g, ''));
+                            if (!isNaN(value)) {
+                                vector[key] = value;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return vector;
+        }
+
+        function calculateDistance(vector1, vector2) {
+            const dx = vector2.x - vector1.x;
+            const dy = vector2.y - vector1.y;
+            const dz = vector2.z - vector1.z;
+
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            return distance;
+        }
+
+        function parseText() {
+            const text = document.getElementById('textInput').value;
+            const setposRegex = /setpos\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)/;
+
+            const setposMatch = text.match(setposRegex);
+            const vector2 = buildVectorFromText(text);
+
+            if (setposMatch) {
+                const vector1 = {
+                    x: parseFloat(setposMatch[1]),
+                    y: parseFloat(setposMatch[2]),
+                    z: parseFloat(setposMatch[3])
+                };
+
+                if (vector2 && Object.keys(vector2).length > 0) {
+                    const distance = calculateDistance(vector1, vector2);
+                    const distanceDisplay = document.getElementById('distance');
+                    distanceDisplay.textContent = `Distance: ${distance.toFixed(2)}`;
+
+                    const historyLog = document.getElementById('history');
+                    const p = document.createElement('p');
+                    p.textContent = `Distance: ${distance.toFixed(2)}`;
+                    historyLog.appendChild(p);
+                } else {
+                    alert("Vector 2 not found in the provided text.");
+                }
+            } else {
+                alert("Vector 1 not found in the provided text.");
+            }
+        }
+    </script>
+</body>
+
+</html>
